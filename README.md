@@ -1,97 +1,94 @@
 # Amperfied Connect Modbus
 
-Custom integration for controlling an Amperfied Connect wallbox locally from
-Home Assistant over Modbus TCP.
+Home Assistant integration for Amperfied Connect wallboxes using the local
+Modbus TCP interface.
 
-> **Status:** `0.1.0` is a test release. Test the behavior on the actual
-> wallbox before relying on it unattended.
+I started this project for my own Connect wallbox. The existing Heidelberg
+integration already covered the basic registers, but I wanted the Eco mode,
+the internal phase switch and the end of a charging session to work together
+without several separate Home Assistant automations.
 
-## Added wallbox behavior
+The integration is still young. Version `0.1.0` has been tested on a Connect
+wallbox with register layout `2.0.4`.
 
-| Home Assistant control | Wallbox behavior |
-|---|---|
-| **Eco mode on** | Enables the wallbox's automatic solar charging strategy (register 502). |
-| **Eco mode off** | Returns to manual charging management and, by default, requests three-phase charging. |
-| **Phase mode** | Selects one or three phases via register 501 and displays the actual state from register 5001. Manual selection is unavailable while Eco mode controls the phases. |
-| **Stop charging** | Sets the charge-current command in register 261 to zero. It does not operate the wallbox's global Remote Lock. |
-| **Vehicle disconnected** | If charging was stopped through register 261, restores the last target current once so that the next RFID-authorized session can start automatically. |
+## What it does
 
-### Bounded phase verification
+- reads charging state, power, current, energy and diagnostic values;
+- controls the charge-current limit and charge enable;
+- switches the wallbox between Eco and manual charging;
+- selects one- or three-phase charging on wallboxes with an internal phase
+  switch;
+- provides a **Stop charging** button for the current session;
+- restores charge enable after the vehicle is unplugged, ready for the next
+  RFID-authorized session.
 
-After each manual phase command, the integration waits for the switch duration
-configured in register 503 plus five seconds. It then checks register 5001.
+When Eco mode is switched off, the integration can automatically return to
+three-phase charging. A phase change is checked after the switching time stored
+in the wallbox. If the requested state was not reached, the command is repeated
+once. It will not keep retrying in a loop.
 
-- If the requested state is present, nothing else is written.
-- State `0` (switching) gets one additional 10-second grace check.
-- A wrong final state causes exactly one retry of register 501.
-- After that retry, the state is checked once more. A failure creates one
-  persistent Home Assistant notification. There is no command loop.
+The manual phase selector is unavailable while Eco mode is active because the
+wallbox controls the phases itself in that mode.
 
-If register 503 is unavailable, the documented 90-second default is used.
+## Stop charging and Remote Lock
 
-## Important distinction
+The **Stop charging** button sets the charge-current command to zero. Once the
+vehicle is unplugged, the previous current limit is restored automatically.
 
-**Remote Lock** is a global software lock for the wallbox. It is not the cable
-latch and it is not used by the **Stop charging** button. Cable release remains
-the responsibility of the vehicle after the charging current has been stopped.
+This is separate from **Remote Lock**. Remote Lock blocks the wallbox globally;
+it does not release the charging cable. Depending on the vehicle, it may still
+need to be unlocked before the cable can be removed.
+
+## Installation with HACS
+
+Until the integration is included in the default HACS list, add this repository
+as a custom repository:
+
+`https://github.com/DerHimbeerHugo/home-assistant-amperfied-connect-modbus`
+
+Select **Integration** as the repository type, install **Amperfied Connect
+Modbus**, restart Home Assistant and add the integration under **Settings ->
+Devices & services**.
+
+The wallbox accepts only one Modbus TCP connection. Do not run this integration
+and another Modbus integration for the same wallbox at the same time.
 
 ## Options
 
-The integration options contain three independent switches, enabled by default:
+The integration can be configured under **Settings -> Devices & services ->
+Amperfied Connect Modbus -> Configure**.
 
-- switch to three phases when Eco mode is disabled;
-- verify a phase command and retry once;
-- restore charge enable after the vehicle is disconnected.
+Available options:
 
-The Modbus polling interval remains configurable from 3 to 30 seconds.
+- polling interval;
+- return to three phases when Eco mode is disabled;
+- verify phase switching and retry once;
+- restore charge enable after the vehicle is unplugged.
+
+The three behavior options are enabled by default.
 
 ## Compatibility
 
-Phase and Eco entities are created only when their registers are present. The
-phase-switch functions are intended for Connect Solar / Solar Pro hardware with
-the internal phase-switch contactor. Other devices keep the supported basic
-entities without being forced to expose unavailable controls.
+Eco and phase-switch entities are added only when the corresponding Modbus
+registers are available. The phase functions require Connect Solar / Solar Pro
+hardware with the internal phase-switch contactor.
 
-The register implementation follows Amperfied's
-[Connect series Modbus register documentation](https://www.amperfied.de/wp-content/uploads/2025/05/Documentation-Modbus-Register-Layout-connect-series-20250422.pdf).
+Register definitions are based on the official
+[Modbus documentation for the Connect series](https://www.amperfied.de/wp-content/uploads/2025/05/Documentation-Modbus-Register-Layout-connect-series-20250422.pdf).
 
-## Manual installation for the first test
+If you use the integration with another Connect model or register-layout
+version, feedback is welcome through the GitHub issue tracker.
 
-1. Copy `custom_components/amperfied_connect_modbus` into the same path below
-   your Home Assistant configuration directory.
-2. Restart Home Assistant completely.
-3. Open **Settings → Devices & services → Add integration** and select
-   **Amperfied Connect Modbus**.
-4. Enter the wallbox IP address, port `502`, and its Modbus device ID.
+## Credits and license
 
-The wallbox accepts only one Modbus TCP connection. Do not keep the old and new
-config entries active at the same time. The old integration files may remain as
-a backup, but unload or remove its config entry before configuring this one.
-
-Because this integration has its own domain, Home Assistant creates a new config
-entry and new unique IDs. After removing the old entry, existing entity IDs can
-usually be assigned to the replacement entities again. Check any dashboards and
-automations before deleting the old entity-registry entries.
-
-## HACS installation and updates
-
-After the repository has been published, add its URL in HACS as a custom
-repository of category **Integration**. Releases are generated from the version
-in `manifest.json`; HACS can then install later versions normally without
-touching the original `heidelberg_energy_control` integration.
-
-Repository URL:
-[`DerHimbeerHugo/home-assistant-amperfied-connect-modbus`](https://github.com/DerHimbeerHugo/home-assistant-amperfied-connect-modbus)
-
-## Safety
-
-Phase switching operates mains-voltage contactors inside supported wallboxes.
-Use it only with a compatible wallbox installation and follow the official
-electrical installation and operating instructions.
-
-## Origin and license
-
-This project is derived from Schrolli91's MIT-licensed
+This project is based on Bastian Schroll's
 [`heidelberg_energy_control`](https://github.com/Schrolli91/heidelberg_energy_control)
-integration. The original copyright and MIT license are retained. This is an
-independent community project and is not an official Amperfied integration.
+integration and keeps its MIT license and copyright notice.
+
+Amperfied and Heidelberg product names are used only to identify compatible
+hardware. This is an independent community project and is not affiliated with
+or endorsed by the manufacturer.
+
+Modbus commands directly affect charging behavior. Use the integration only
+with compatible hardware and follow the wallbox and electrical-installation
+instructions.
