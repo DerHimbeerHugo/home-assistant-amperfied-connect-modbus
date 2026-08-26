@@ -49,6 +49,8 @@ def build_mock_modbus_client(fixture: dict[str, list[int]]) -> MagicMock:
         (200, 1): fixture["input_200_hw_vers"],
         (203, 1): fixture["input_203_sw_vers"],
     }
+    if "input_1250_1290_firmware" in fixture:
+        input_reads[(1250, 41)] = fixture["input_1250_1290_firmware"]
     holding_reads = {
         (259, 1): fixture["holding_259_remote_lock"],
         (261, 1): fixture["holding_261_target_current"],

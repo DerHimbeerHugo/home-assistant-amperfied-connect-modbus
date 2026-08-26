@@ -1,7 +1,8 @@
 """Core (v1.0.x) capability.
 
 Owns the original Amperfied Connect Modbus register set:
-  - static: layout version, hw/sw version, hw current limits
+  - static: layout version, hardware variant, application revision,
+            hardware current limits
   - polled: charging state, currents, voltages, power, energies,
             locks, target current
   - writes: remote lock (259), target current (261)
@@ -34,7 +35,7 @@ from ...const import (
     DATA_EXTERNAL_LOCK_STATE,
     DATA_HW_MAX_CURR,
     DATA_HW_MIN_CURR,
-    DATA_HW_VERSION,
+    DATA_HW_VARIANT,
     DATA_IS_CHARGING,
     DATA_IS_PLUGGED,
     DATA_PCB_TEMPERATURE,
@@ -60,7 +61,10 @@ REG_LAYOUT = 4
 REG_DATA_START = 5
 REG_DATA_COUNT = 14
 REG_HW_CURR_START = 100
-REG_HW_VERS = 200
+# Register 200 is a manufacturer-internal hardware variant, not a semantic
+# hardware version.  Keep the raw value so the device-info layer can label it
+# honestly instead of turning e.g. 0 into the misleading version "0.0.0".
+REG_HW_VARIANT = 200
 REG_SW_VERS = 203
 REG_COMMAND_REMOTE_LOCK = 259
 REG_COMMAND_TARGET_CURRENT = 261
@@ -105,7 +109,7 @@ class CoreCapability(Capability):
     static_definitions: tuple[RegisterDefinition, ...] = (
         RegisterDefinition(REG_LAYOUT, 1, RegisterType.INPUT),
         RegisterDefinition(REG_HW_CURR_START, 2, RegisterType.INPUT),
-        RegisterDefinition(REG_HW_VERS, 1, RegisterType.INPUT),
+        RegisterDefinition(REG_HW_VARIANT, 1, RegisterType.INPUT),
         RegisterDefinition(REG_SW_VERS, 1, RegisterType.INPUT),
     )
     polled_definitions: tuple[RegisterDefinition, ...] = (
@@ -117,7 +121,7 @@ class CoreCapability(Capability):
     def decode_static(self, registers: dict[int, int]) -> dict[str, Any]:
         return {
             DATA_REG_LAYOUT_VER: register_to_version(registers[REG_LAYOUT]),
-            DATA_HW_VERSION: register_to_version(registers[REG_HW_VERS]),
+            DATA_HW_VARIANT: registers[REG_HW_VARIANT],
             DATA_SW_VERSION: register_to_version(registers[REG_SW_VERS]),
             DATA_HW_MAX_CURR: registers[REG_HW_CURR_START],
             DATA_HW_MIN_CURR: registers[REG_HW_CURR_START + 1],

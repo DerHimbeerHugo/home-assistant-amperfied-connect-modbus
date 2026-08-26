@@ -27,11 +27,10 @@ from custom_components.amperfied_connect_modbus.const import COMMAND_TARGET_CURR
 def _mock_coordinator(data: dict) -> MagicMock:
     coord = MagicMock()
     coord.data = data
-    # Entity base __init__ builds DeviceInfo from static_data — needs all three
-    # version fields to concatenate the "v" prefix without a TypeError.
+    # Entity base __init__ builds DeviceInfo from static data.
     coord.static_data = {
         "reg_layout_ver": "1.0.8",
-        "hw_version": "1.0.0",
+        "hw_variant": 1,
         "sw_version": "1.0.8",
     }
     coord.api = MagicMock()

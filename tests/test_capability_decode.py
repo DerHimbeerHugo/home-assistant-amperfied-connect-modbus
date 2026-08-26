@@ -20,7 +20,7 @@ from custom_components.amperfied_connect_modbus.const import (
     DATA_CURRENT_L1,
     DATA_HW_MAX_CURR,
     DATA_HW_MIN_CURR,
-    DATA_HW_VERSION,
+    DATA_HW_VARIANT,
     DATA_IS_CHARGING,
     DATA_PHASES_ACTIVE,
     DATA_REG_LAYOUT_VER,
@@ -32,7 +32,7 @@ from custom_components.amperfied_connect_modbus.core.capabilities.core import (
     REG_COMMAND_TARGET_CURRENT,
     REG_DATA_START,
     REG_HW_CURR_START,
-    REG_HW_VERS,
+    REG_HW_VARIANT,
     REG_LAYOUT,
     REG_SW_VERS,
     CoreCapability,
@@ -49,7 +49,7 @@ def test_decode_static_reads_only_from_dict_lookups():
     """Given a hand-built register dict, decode_static returns a static dict."""
     regs = {
         REG_LAYOUT: 0x107,
-        REG_HW_VERS: 0x100,
+        REG_HW_VARIANT: 0x100,
         REG_SW_VERS: 0x107,
         REG_HW_CURR_START: 16,
         REG_HW_CURR_START + 1: 6,
@@ -60,7 +60,7 @@ def test_decode_static_reads_only_from_dict_lookups():
 
     assert result == {
         DATA_REG_LAYOUT_VER: "1.0.7",
-        DATA_HW_VERSION: "1.0.0",
+        DATA_HW_VARIANT: 0x100,
         DATA_SW_VERSION: "1.0.7",
         DATA_HW_MAX_CURR: 16,
         DATA_HW_MIN_CURR: 6,
@@ -71,7 +71,7 @@ def test_decode_static_ignores_unrelated_addresses():
     """Extra keys in the registers dict don't affect the output."""
     regs = {
         REG_LAYOUT: 0x204,
-        REG_HW_VERS: 0x003,
+        REG_HW_VARIANT: 0x003,
         REG_SW_VERS: 0x003,
         REG_HW_CURR_START: 16,
         REG_HW_CURR_START + 1: 6,
@@ -133,7 +133,7 @@ def test_core_declares_expected_definitions():
     assert CoreCapability.static_definitions == (
         RegisterDefinition(REG_LAYOUT, 1, RegisterType.INPUT),
         RegisterDefinition(REG_HW_CURR_START, 2, RegisterType.INPUT),
-        RegisterDefinition(REG_HW_VERS, 1, RegisterType.INPUT),
+        RegisterDefinition(REG_HW_VARIANT, 1, RegisterType.INPUT),
         RegisterDefinition(REG_SW_VERS, 1, RegisterType.INPUT),
     )
     # Polled defs: one input block for data, plus two holding registers

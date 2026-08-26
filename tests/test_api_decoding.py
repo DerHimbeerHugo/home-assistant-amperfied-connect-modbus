@@ -26,7 +26,7 @@ from custom_components.amperfied_connect_modbus.const import (
     DATA_EXTERNAL_LOCK_STATE,
     DATA_HW_MAX_CURR,
     DATA_HW_MIN_CURR,
-    DATA_HW_VERSION,
+    DATA_HW_VARIANT,
     DATA_IS_CHARGING,
     DATA_IS_PLUGGED,
     DATA_PCB_TEMPERATURE,
@@ -56,7 +56,7 @@ VARIANT_V1_0_7 = pytest.param(
     "wallbox_v1_0_7",
     {
         DATA_REG_LAYOUT_VER: "1.0.7",
-        DATA_HW_VERSION: "1.0.0",
+        DATA_HW_VARIANT: 256,
         DATA_SW_VERSION: "1.0.7",
         DATA_HW_MAX_CURR: 16,
         DATA_HW_MIN_CURR: 6,
@@ -89,8 +89,8 @@ VARIANT_V2_0_4 = pytest.param(
     "wallbox_v2_0_4",
     {
         DATA_REG_LAYOUT_VER: "2.0.4",
-        DATA_HW_VERSION: "0.0.3",
-        DATA_SW_VERSION: "0.0.3",
+        DATA_HW_VARIANT: 3,
+        DATA_SW_VERSION: "V2.4.1",
         DATA_HW_MAX_CURR: 16,
         DATA_HW_MIN_CURR: 6,
     },

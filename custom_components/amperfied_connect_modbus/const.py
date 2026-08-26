@@ -35,7 +35,7 @@ PLATFORMS: list[Platform] = [
 # ##### Data Keys #####
 # Init Data
 DATA_REG_LAYOUT_VER = "reg_layout_ver"
-DATA_HW_VERSION = "hw_version"
+DATA_HW_VARIANT = "hw_variant"
 DATA_SW_VERSION = "sw_version"
 DATA_HW_MIN_CURR = "hw_min_current"
 DATA_HW_MAX_CURR = "hw_max_current"
